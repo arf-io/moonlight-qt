@@ -156,6 +156,8 @@ public:
     Q_PROPERTY(bool swapFaceButtons MEMBER swapFaceButtons NOTIFY swapFaceButtonsChanged)
     Q_PROPERTY(bool keepAwake MEMBER keepAwake NOTIFY keepAwakeChanged)
     Q_PROPERTY(CaptureSysKeysMode captureSysKeysMode MEMBER captureSysKeysMode NOTIFY captureSysKeysModeChanged)
+    Q_PROPERTY(bool clipboardSharing MEMBER clipboardSharing NOTIFY clipboardSharingChanged)
+    Q_PROPERTY(bool synchronizeAv MEMBER synchronizeAv NOTIFY synchronizeAvChanged)
     Q_PROPERTY(Language language MEMBER language NOTIFY languageChanged);
 
     Q_INVOKABLE bool retranslate();
@@ -199,6 +201,8 @@ public:
     UIDisplayMode uiDisplayMode;
     Language language;
     CaptureSysKeysMode captureSysKeysMode;
+    bool clipboardSharing;
+    bool synchronizeAv;
     RendererSelection rendererSelection;
 
 signals:
@@ -235,6 +239,8 @@ signals:
     void reverseScrollDirectionChanged();
     void swapFaceButtonsChanged();
     void captureSysKeysModeChanged();
+    void clipboardSharingChanged();
+    void synchronizeAvChanged();
     void keepAwakeChanged();
     void languageChanged();
     void rendererSelectionChanged();

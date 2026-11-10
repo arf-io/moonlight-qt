@@ -1,6 +1,7 @@
 #include "pacer.h"
 #include "streaming/streamutils.h"
 #include "streaming/session.h"
+#include "streaming/mediaclock.h"
 
 #ifdef Q_OS_WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -223,11 +224,14 @@ void Pacer::handleVsync(int timeUntilNextVsyncMillis)
     // If the queue length history entries are large, be strict
     // about dropping excess frames.
     int frameDropTarget = 1;
+    const bool audioClockActive = !m_PacingQueue.isEmpty() &&
+            MediaClock::get().videoDelay(uint32_t(m_PacingQueue.head()->pts), LiGetMicroseconds()).has_value();
+    if (audioClockActive) frameDropTarget = PACER_SYNC_MAX_OUTSTANDING_FRAMES - 2;
 
     // If we may get more frames per second than we can display, use
     // frame history to drop frames only if consistently above the
     // one queued frame mark.
-    if (m_MaxVideoFps >= m_DisplayFps) {
+    if (!audioClockActive && m_MaxVideoFps >= m_DisplayFps) {
         for (int queueHistoryEntry : std::as_const(m_PacingQueueHistory)) {
             if (queueHistoryEntry <= 1) {
                 // Be lenient as long as the queue length
@@ -270,12 +274,28 @@ void Pacer::handleVsync(int timeUntilNextVsyncMillis)
         }
     }
 
+    // Keep presentation tied to the audio device rather than to packet arrival.
+    // Drop late video, hold early frames for a later V-sync, and retain the bounded
+    // hardware-surface budget. An expired/unavailable audio clock falls back normally.
+    auto delay = MediaClock::get().videoDelay(uint32_t(m_PacingQueue.head()->pts), LiGetMicroseconds());
+    while (delay && *delay < -20000 && m_PacingQueue.count() > 1) {
+        auto* late = m_PacingQueue.dequeue();
+        m_VideoStats->pacerDroppedFrames++;
+        av_frame_free(&late);
+        delay = MediaClock::get().videoDelay(uint32_t(m_PacingQueue.head()->pts), LiGetMicroseconds());
+    }
+    if (delay && *delay > std::max(1000, timeUntilNextVsyncMillis * 1000)) {
+        m_FrameQueueLock.unlock();
+        return;
+    }
+
     // Place the first frame on the render queue
     enqueueFrameForRenderingAndUnlock(m_PacingQueue.dequeue());
 }
 
 bool Pacer::initialize(SDL_Window* window, int maxVideoFps, bool enablePacing)
 {
+    enablePacing = enablePacing || MediaClock::get().enabled();
     m_MaxVideoFps = maxVideoFps;
     m_DisplayFps = StreamUtils::getDisplayRefreshRate(window);
     m_RendererAttributes = m_VsyncRenderer->getRendererAttributes();
@@ -414,9 +434,17 @@ void Pacer::renderFrame(AVFrame* frame)
 
 void Pacer::dropFrameForEnqueue(QQueue<AVFrame*>& queue)
 {
-    SDL_assert(queue.size() <= MAX_QUEUED_FRAMES);
-    if (queue.size() == MAX_QUEUED_FRAMES) {
-        AVFrame* frame = queue.dequeue();
+    const auto maximum = MediaClock::get().enabled() ? PACER_SYNC_MAX_OUTSTANDING_FRAMES - 2 : MAX_QUEUED_FRAMES;
+    // Both queues share the same hardware surfaces. Enforce one aggregate budget,
+    // including when an output-device reset shrinks the buffering policy.
+    while (m_PacingQueue.size() + m_RenderQueue.size() >= maximum) {
+        auto* oldest = &queue;
+        if (oldest->isEmpty()) oldest = &queue == &m_PacingQueue ? &m_RenderQueue : &m_PacingQueue;
+        else if (!m_PacingQueue.isEmpty() && !m_RenderQueue.isEmpty()) {
+            oldest = m_PacingQueue.head()->pkt_dts < m_RenderQueue.head()->pkt_dts ? &m_PacingQueue : &m_RenderQueue;
+        }
+        AVFrame* frame = oldest->dequeue();
+        m_VideoStats->pacerDroppedFrames++;
         av_frame_free(&frame);
     }
 }

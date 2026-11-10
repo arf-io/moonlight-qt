@@ -1,4 +1,5 @@
 #include "../session.h"
+#include "../mediaclock.h"
 #include "renderers/renderer.h"
 
 #ifdef HAVE_SLAUDIO
@@ -223,6 +224,7 @@ void Session::arDecodeAndPlaySample(char* sampleData, int sampleLength)
         }
 
         if (!s_ActiveSession->m_AudioRenderer->submitAudio(desiredBufferSize)) {
+            MediaClock::get().reset(MediaClock::get().enabled());
             SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
                         "Reinitializing audio renderer after failure");
 
@@ -231,6 +233,13 @@ void Session::arDecodeAndPlaySample(char* sampleData, int sampleLength)
 
             delete s_ActiveSession->m_AudioRenderer;
             s_ActiveSession->m_AudioRenderer = nullptr;
+        }
+        else if (samplesDecoded > 0) {
+            const auto host = LiGetArfAudioHostTimeUs();
+            const auto latency = s_ActiveSession->m_AudioRenderer->queuedLatencyUs();
+            const auto now = LiGetMicroseconds();
+            const auto duration = int64_t(samplesDecoded) * 1000000 / s_ActiveSession->m_ActiveAudioConfig.sampleRate;
+            if (host && latency >= 0) MediaClock::get().update(host, now + std::max<int64_t>(0, latency - duration), now);
         }
     }
 

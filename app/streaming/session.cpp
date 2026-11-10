@@ -33,6 +33,8 @@
 
 #include <QtEndian>
 #include <QCoreApplication>
+#include "desktopclipboard.h"
+#include "mediaclock.h"
 #include <QThreadPool>
 #include <QSvgRenderer>
 #include <QPainter>
@@ -1621,6 +1623,7 @@ bool Session::startConnectionAsync()
     }
 
     QString rtspSessionUrl;
+    bool avSyncEnabled = false;
 
     try {
         NvHTTP http(m_Computer);
@@ -1631,6 +1634,8 @@ bool Session::startConnectionAsync()
                       m_Preferences->playAudioOnHost,
                       m_InputHandler->getAttachedGamepadMask(),
                       !m_Preferences->multiController,
+                      m_Preferences->synchronizeAv,
+                      avSyncEnabled,
                       rtspSessionUrl);
     } catch (const GfeHttpResponseException& e) {
         emit displayLaunchError(tr("Host returned error: %1").arg(e.toQString()));
@@ -1641,6 +1646,9 @@ bool Session::startConnectionAsync()
     }
 
     QByteArray hostnameStr = m_Computer->activeAddress.address().toUtf8();
+    LiSetArfAvSyncEnabled(avSyncEnabled);
+    MediaClock::get().reset(avSyncEnabled);
+    if (avSyncEnabled) qInfo() << "Negotiated ARF capture-time audio/video synchronization";
     QByteArray siAppVersion = m_Computer->appVersion.toUtf8();
 
     SERVER_INFORMATION hostInfo;
@@ -1976,7 +1984,14 @@ void Session::exec()
     // Hijack this thread to be the SDL main thread. We have to do this
     // because we want to suspend all Qt processing until the stream is over.
     SDL_Event event;
+    std::unique_ptr<DesktopClipboard> clipboard;
+    if (m_Preferences->clipboardSharing) {
+        NvHTTP host(m_Computer);
+        clipboard = std::make_unique<DesktopClipboard>(host.m_BaseUrlHttps, host.serverCert(),
+                                                       IdentityManager::get()->getSslConfig());
+    }
     for (;;) {
+        if (clipboard) clipboard->pump();
 #if SDL_VERSION_ATLEAST(2, 0, 18) && !defined(STEAM_LINK)
         // SDL 2.0.18 has a proper wait event implementation that uses platform
         // support to block on events rather than polling on Windows, macOS, X11,
@@ -1987,7 +2002,7 @@ void Session::exec()
         // NB: This behavior was introduced in SDL 2.0.16, but had a few critical
         // issues that could cause indefinite timeouts, delayed joystick detection,
         // and other problems.
-        if (!SDL_WaitEventTimeout(&event, 1000)) {
+        if (!SDL_WaitEventTimeout(&event, clipboard ? 250 : 1000)) {
             presence.runCallbacks();
             continue;
         }

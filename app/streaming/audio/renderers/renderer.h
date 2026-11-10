@@ -14,6 +14,8 @@ public:
 
     // Return false if an unrecoverable error has occurred and the renderer must be reinitialized
     virtual bool submitAudio(int bytesWritten) = 0;
+    // Queue plus device-buffer latency, or -1 when this renderer cannot estimate it.
+    virtual int64_t queuedLatencyUs() const { return -1; }
 
     virtual void remapChannels(POPUS_MULTISTREAM_CONFIGURATION) {
         // Use default channel mapping:

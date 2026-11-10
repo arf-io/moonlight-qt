@@ -12,6 +12,7 @@
 // - 1 frame removed from the render queue in the process of rendering
 // - 1 frame for deferred free
 #define PACER_MAX_OUTSTANDING_FRAMES (3 + 1 + 1)
+#define PACER_SYNC_MAX_OUTSTANDING_FRAMES (12 + 1 + 1)
 
 class IVsyncSource {
 public:

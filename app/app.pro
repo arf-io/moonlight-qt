@@ -174,6 +174,7 @@ SOURCES += \
     backend/identitymanager.cpp \
     backend/nvcomputer.cpp \
     backend/nvhttp.cpp \
+    streaming/desktopclipboard.cpp \
     backend/nvpairingmanager.cpp \
     backend/computermanager.cpp \
     backend/boxartmanager.cpp \
