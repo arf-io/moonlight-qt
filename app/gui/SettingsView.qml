@@ -1362,6 +1362,23 @@ Flickable {
                                   qsTr("NOTE: Due to a bug in GeForce Experience, this option may not work properly if your host PC has multiple monitors.")
                 }
 
+                CheckBox {
+                    id: localCursorCheck
+                    hoverEnabled: true
+                    width: parent.width
+                    text: qsTr("Show a local cursor in remote desktop mode")
+                    font.pointSize: 12
+                    enabled: StreamingPreferences.absoluteMouseMode
+                    checked: StreamingPreferences.showLocalCursor
+                    onCheckedChanged: StreamingPreferences.showLocalCursor = checked
+                    Accessible.description: ToolTip.text
+                    ToolTip.delay: 1000
+                    ToolTip.timeout: 10000
+                    ToolTip.visible: hovered || activeFocus
+                    ToolTip.text: qsTr("Shows an immediate local pointer. Disable cursor capture on the host to avoid a second pointer. The local pointer does not follow remote cursor shapes.") + " " +
+                                  qsTr("You can toggle this while streaming using Ctrl+Alt+Shift+C.")
+                }
+
                 Row {
                     spacing: 5
                     width: parent.width

@@ -9,3 +9,5 @@ The clipboard option is explicit and off by default. Its description names suppo
 Canonical owners: settings persistence is `StreamingPreferences`; checkbox behavior is Qt Quick Controls; existing settings scroll ownership stays unchanged; TLS identity is the existing paired host certificate. The change adds no route, modal, dropdown, table, toast, palette, or animation.
 
 The optional audio/video control follows the same CheckBox and help pattern in Audio Settings. It requests a negotiated capture-time protocol extension and may add bounded video delay; stock hosts retain their existing format. Media buffering and the audio clock are owned by MediaClock and Pacer, not the QML control.
+
+The local cursor option reuses the existing Input Settings CheckBox. It defaults on, applies in remote desktop mouse mode and is disabled in the form when that mode is off. Its help explains host cursor capture and the lack of remote shape updates. Existing Ctrl+Alt+Shift+C remains a per-session override.
