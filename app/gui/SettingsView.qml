@@ -965,6 +965,21 @@ Flickable {
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("Mutes Moonlight's audio when you Alt+Tab out of the stream or click on a different window.")
                 }
+
+                CheckBox {
+                    id: synchronizeAvCheck
+                    hoverEnabled: true
+                    width: parent.width
+                    text: qsTr("Synchronize audio and video with a compatible host")
+                    font.pointSize: 12
+                    checked: StreamingPreferences.synchronizeAv
+                    onCheckedChanged: StreamingPreferences.synchronizeAv = checked
+                    Accessible.description: qsTr("Use the audio playback clock to pace video. May add video delay. Requires a host that supports synchronized streaming.")
+                    ToolTip.delay: 1000
+                    ToolTip.timeout: 10000
+                    ToolTip.visible: hovered || activeFocus
+                    ToolTip.text: Accessible.description
+                }
             }
         }
 
@@ -1420,6 +1435,21 @@ Flickable {
                             updatePref()
                         }
                     }
+                }
+
+                CheckBox {
+                    id: clipboardSharingCheck
+                    hoverEnabled: true
+                    width: parent.width
+                    text: qsTr("Share clipboard while streaming")
+                    font.pointSize: 12
+                    checked: StreamingPreferences.clipboardSharing
+                    onCheckedChanged: StreamingPreferences.clipboardSharing = checked
+                    Accessible.description: qsTr("Share text, images, and rich text with a compatible host during the stream. Enable clipboard sharing on the host too. Files are not transferred.")
+                    ToolTip.delay: 1000
+                    ToolTip.timeout: 10000
+                    ToolTip.visible: hovered || activeFocus
+                    ToolTip.text: Accessible.description
                 }
 
                 CheckBox {

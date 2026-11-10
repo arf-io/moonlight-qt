@@ -15,6 +15,7 @@ public:
     virtual void* getAudioBuffer(int* size);
 
     virtual bool submitAudio(int bytesWritten);
+    int64_t queuedLatencyUs() const override;
 
     virtual AudioFormat getAudioBufferFormat();
 
@@ -23,4 +24,5 @@ private:
     void* m_AudioBuffer;
     Uint32 m_FrameSize;
     Uint32 m_FrameDurationMs;
+    Uint32 m_DeviceLatencyUs = 0;
 };

@@ -44,6 +44,7 @@ bool SdlAudioRenderer::prepareForPlayback(const OPUS_MULTISTREAM_CONFIGURATION* 
                      SDL_GetError());
         return false;
     }
+    m_DeviceLatencyUs = uint64_t(have.samples) * 1000000 / have.freq;
 
     m_AudioBuffer = SDL_malloc(m_FrameSize);
     if (m_AudioBuffer == nullptr) {
@@ -70,6 +71,12 @@ bool SdlAudioRenderer::prepareForPlayback(const OPUS_MULTISTREAM_CONFIGURATION* 
     SDL_PauseAudioDevice(m_AudioDevice, 0);
 
     return true;
+}
+
+int64_t SdlAudioRenderer::queuedLatencyUs() const
+{
+    if (!m_AudioDevice || !m_FrameSize) return -1;
+    return uint64_t(SDL_GetQueuedAudioSize(m_AudioDevice)) * m_FrameDurationMs * 1000 / m_FrameSize + m_DeviceLatencyUs;
 }
 
 SdlAudioRenderer::~SdlAudioRenderer()

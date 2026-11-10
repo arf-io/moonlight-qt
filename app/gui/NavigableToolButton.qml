@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 
 ToolButton {
     property string iconSource
+    Accessible.name: text.length ? text : ToolTip.text
 
     activeFocusOnTab: true
 

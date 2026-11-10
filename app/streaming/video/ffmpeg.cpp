@@ -2,6 +2,7 @@
 #include "ffmpeg.h"
 #include "utils.h"
 #include "streaming/session.h"
+#include "streaming/mediaclock.h"
 
 #include <h264_stream.h>
 
@@ -539,7 +540,8 @@ bool FFmpegVideoDecoder::completeInitialization(const AVCodec* decoder, enum AVP
     m_VideoDecoderCtx->pkt_timebase.den = 90000;
 
     // Allocate enough extra frames for Pacer to avoid stalling the decoder
-    m_VideoDecoderCtx->extra_hw_frames = PACER_MAX_OUTSTANDING_FRAMES;
+    m_VideoDecoderCtx->extra_hw_frames = MediaClock::get().enabled() ?
+                PACER_SYNC_MAX_OUTSTANDING_FRAMES : PACER_MAX_OUTSTANDING_FRAMES;
 
     // For non-hwaccel decoders, set the pix_fmt to hint to the decoder which
     // format should be used. This is necessary for certain decoders like the
