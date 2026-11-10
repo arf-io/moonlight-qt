@@ -132,6 +132,7 @@ public:
     Q_PROPERTY(bool enableMdns MEMBER enableMdns NOTIFY enableMdnsChanged)
     Q_PROPERTY(bool quitAppAfter MEMBER quitAppAfter NOTIFY quitAppAfterChanged)
     Q_PROPERTY(bool absoluteMouseMode MEMBER absoluteMouseMode NOTIFY absoluteMouseModeChanged)
+    Q_PROPERTY(bool showLocalCursor MEMBER showLocalCursor NOTIFY showLocalCursorChanged)
     Q_PROPERTY(bool absoluteTouchMode MEMBER absoluteTouchMode NOTIFY absoluteTouchModeChanged)
     Q_PROPERTY(bool framePacing MEMBER framePacing NOTIFY framePacingChanged)
     Q_PROPERTY(bool connectionWarnings MEMBER connectionWarnings NOTIFY connectionWarningsChanged)
@@ -176,6 +177,7 @@ public:
     bool enableMdns;
     bool quitAppAfter;
     bool absoluteMouseMode;
+    bool showLocalCursor;
     bool absoluteTouchMode;
     bool framePacing;
     bool connectionWarnings;
@@ -218,6 +220,7 @@ signals:
     void enableMdnsChanged();
     void quitAppAfterChanged();
     void absoluteMouseModeChanged();
+    void showLocalCursorChanged();
     void absoluteTouchModeChanged();
     void audioConfigChanged();
     void videoCodecConfigChanged();
